@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { Dialogue } from "@/schema";
 
 const section: React.CSSProperties = {
@@ -23,12 +23,36 @@ const btn = (primary = false): React.CSSProperties => ({
 
 type RenderState =
   | { kind: "idle" }
-  | { kind: "rendering"; progress: number }
+  | {
+      kind: "rendering";
+      stage: "queued" | "selecting" | "rendering" | "downloading";
+      progress: number;
+    }
   | { kind: "done"; url: string; bytes: number }
   | { kind: "error"; message: string };
 
+const stageLabel = (stage: "queued" | "selecting" | "rendering" | "downloading") => {
+  switch (stage) {
+    case "queued":
+      return "Queued…";
+    case "selecting":
+      return "Preparing composition…";
+    case "rendering":
+      return "Rendering frames";
+    case "downloading":
+      return "Downloading MP4…";
+  }
+};
+
 export const ExportPanel: React.FC<{ dialogue: Dialogue }> = ({ dialogue }) => {
   const [render, setRender] = useState<RenderState>({ kind: "idle" });
+  const esRef = useRef<EventSource | null>(null);
+
+  useEffect(() => {
+    return () => {
+      esRef.current?.close();
+    };
+  }, []);
 
   const downloadJSON = () => {
     const blob = new Blob([JSON.stringify(dialogue, null, 2)], { type: "application/json" });
@@ -41,7 +65,9 @@ export const ExportPanel: React.FC<{ dialogue: Dialogue }> = ({ dialogue }) => {
   };
 
   const renderMp4 = async () => {
-    setRender({ kind: "rendering", progress: 0 });
+    esRef.current?.close();
+    setRender({ kind: "rendering", stage: "queued", progress: 0 });
+    let jobId: string;
     try {
       const res = await fetch("/render", {
         method: "POST",
@@ -49,15 +75,83 @@ export const ExportPanel: React.FC<{ dialogue: Dialogue }> = ({ dialogue }) => {
         body: JSON.stringify(dialogue),
       });
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `HTTP ${res.status}`);
+        throw new Error((await res.text()) || `HTTP ${res.status}`);
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      setRender({ kind: "done", url, bytes: blob.size });
+      const data = (await res.json()) as { jobId: string };
+      jobId = data.jobId;
     } catch (err) {
       setRender({ kind: "error", message: err instanceof Error ? err.message : String(err) });
+      return;
     }
+
+    const es = new EventSource(`/render/${jobId}/events`);
+    esRef.current = es;
+
+    es.onmessage = async (ev) => {
+      let event:
+        | { kind: "state"; state: string }
+        | { kind: "progress"; progress: number }
+        | { kind: "done"; url: string; bytes: number }
+        | { kind: "error"; message: string };
+      try {
+        event = JSON.parse(ev.data);
+      } catch {
+        return;
+      }
+
+      if (event.kind === "state") {
+        const stage =
+          event.state === "rendering"
+            ? "rendering"
+            : event.state === "selecting"
+              ? "selecting"
+              : "queued";
+        setRender((prev) =>
+          prev.kind === "rendering"
+            ? { ...prev, stage }
+            : { kind: "rendering", stage, progress: 0 },
+        );
+      } else if (event.kind === "progress") {
+        setRender({ kind: "rendering", stage: "rendering", progress: event.progress });
+      } else if (event.kind === "done") {
+        es.close();
+        esRef.current = null;
+        setRender({ kind: "rendering", stage: "downloading", progress: 1 });
+        try {
+          const r = await fetch(event.url);
+          if (!r.ok) throw new Error(`Download HTTP ${r.status}`);
+          const blob = await r.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          setRender({ kind: "done", url: blobUrl, bytes: blob.size });
+        } catch (err) {
+          setRender({
+            kind: "error",
+            message: err instanceof Error ? err.message : String(err),
+          });
+        }
+      } else if (event.kind === "error") {
+        es.close();
+        esRef.current = null;
+        setRender({ kind: "error", message: event.message });
+      }
+    };
+
+    es.onerror = () => {
+      if (esRef.current !== es) return;
+      es.close();
+      esRef.current = null;
+      setRender((prev) =>
+        prev.kind === "done"
+          ? prev
+          : { kind: "error", message: "Lost connection to render server." },
+      );
+    };
+  };
+
+  const buttonLabel = () => {
+    if (render.kind !== "rendering") return "Render MP4";
+    if (render.stage === "rendering") return `Rendering ${(render.progress * 100).toFixed(0)}%`;
+    return stageLabel(render.stage);
   };
 
   return (
@@ -72,13 +166,44 @@ export const ExportPanel: React.FC<{ dialogue: Dialogue }> = ({ dialogue }) => {
           onClick={renderMp4}
           disabled={render.kind === "rendering"}
         >
-          {render.kind === "rendering" ? "Rendering…" : "Render MP4"}
+          {buttonLabel()}
         </button>
       </div>
 
       {render.kind === "rendering" ? (
-        <div style={{ fontSize: 11, color: "#8892a4" }}>
-          Rendering via local server. First render downloads Chromium (~200 MB) — may take a few minutes.
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div
+            style={{
+              height: 6,
+              background: "#1c2130",
+              borderRadius: 999,
+              overflow: "hidden",
+              position: "relative",
+            }}
+          >
+            {render.stage === "rendering" || render.stage === "downloading" ? (
+              <div
+                style={{
+                  width: `${render.progress * 100}%`,
+                  height: "100%",
+                  background: "#3b82f6",
+                  transition: "width 0.15s ease-out",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(90deg, transparent, rgba(59,130,246,0.6), transparent)",
+                  animation: "convgenShimmer 1.2s linear infinite",
+                }}
+              />
+            )}
+          </div>
+          <div style={{ fontSize: 11, color: "#8892a4" }}>{stageLabel(render.stage)}</div>
+          <style>{`@keyframes convgenShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }`}</style>
         </div>
       ) : null}
 

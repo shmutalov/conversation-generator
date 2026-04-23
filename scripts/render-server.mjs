@@ -35,53 +35,142 @@ function looksLikeDialogue(b) {
   );
 }
 
-app.post("/render", async (req, res) => {
-  if (!looksLikeDialogue(req.body)) {
-    res.status(400).type("text").send("Body must be a dialogue object with template/resolution/aspect/messages");
-    return;
+const jobs = new Map();
+
+function broadcast(job, event) {
+  job.lastEvent = event;
+  for (const subscriber of job.subscribers) {
+    subscriber(event);
   }
+}
 
-  const props = req.body;
-  const tempFile = path.join(
-    os.tmpdir(),
-    `convgen-${crypto.randomBytes(6).toString("hex")}.mp4`,
-  );
-
+async function runRenderJob(job, props) {
   try {
+    broadcast(job, { kind: "state", state: "selecting" });
     const composition = await selectComposition({
       serveUrl,
       id: "Conversation",
       inputProps: props,
     });
 
+    broadcast(job, { kind: "state", state: "rendering" });
     await renderMedia({
       composition,
       serveUrl,
       codec: "h264",
-      outputLocation: tempFile,
+      outputLocation: job.tempFile,
       inputProps: props,
       onProgress: ({ progress }) => {
-        if (process.stdout.isTTY) {
-          process.stdout.write(`\rRendering ${(progress * 100).toFixed(0)}%   `);
-        }
+        job.progress = progress;
+        broadcast(job, { kind: "progress", progress });
       },
     });
-    if (process.stdout.isTTY) process.stdout.write("\n");
 
+    const stat = await fs.stat(job.tempFile);
+    job.state = "done";
+    job.bytes = stat.size;
+    broadcast(job, {
+      kind: "done",
+      url: `/render/${job.id}/file`,
+      bytes: stat.size,
+    });
+  } catch (err) {
+    job.state = "error";
+    job.error = err instanceof Error ? err.message : String(err);
+    broadcast(job, { kind: "error", message: job.error });
+    console.error(`Render ${job.id} failed:`, err);
+  }
+}
+
+app.post("/render", (req, res) => {
+  if (!looksLikeDialogue(req.body)) {
+    res
+      .status(400)
+      .type("text")
+      .send("Body must be a dialogue object with template/resolution/aspect/messages");
+    return;
+  }
+
+  const jobId = crypto.randomBytes(8).toString("hex");
+  const job = {
+    id: jobId,
+    template: req.body.template,
+    state: "pending",
+    progress: 0,
+    tempFile: path.join(os.tmpdir(), `convgen-${jobId}.mp4`),
+    subscribers: new Set(),
+    lastEvent: null,
+    bytes: 0,
+    error: null,
+  };
+  jobs.set(jobId, job);
+
+  res.json({ jobId });
+
+  runRenderJob(job, req.body).catch((err) => {
+    console.error("runRenderJob crash:", err);
+  });
+});
+
+app.get("/render/:jobId/events", (req, res) => {
+  const job = jobs.get(req.params.jobId);
+  if (!job) {
+    res.status(404).type("text").send("Unknown job");
+    return;
+  }
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders?.();
+
+  const send = (event) => {
+    res.write(`data: ${JSON.stringify(event)}\n\n`);
+    if (event.kind === "done" || event.kind === "error") {
+      job.subscribers.delete(send);
+      res.end();
+    }
+  };
+
+  job.subscribers.add(send);
+
+  if (job.lastEvent) {
+    send(job.lastEvent);
+  } else {
+    send({ kind: "state", state: job.state });
+  }
+
+  req.on("close", () => {
+    job.subscribers.delete(send);
+  });
+});
+
+app.get("/render/:jobId/file", async (req, res) => {
+  const job = jobs.get(req.params.jobId);
+  if (!job) {
+    res.status(404).type("text").send("Unknown job");
+    return;
+  }
+  if (job.state !== "done") {
+    res.status(409).type("text").send(`Job not ready (state=${job.state})`);
+    return;
+  }
+
+  try {
+    const data = await fs.readFile(job.tempFile);
     res.setHeader("content-type", "video/mp4");
     res.setHeader(
       "content-disposition",
-      `attachment; filename="${props.template}-${Date.now()}.mp4"`,
+      `attachment; filename="${job.template}-${Date.now()}.mp4"`,
     );
-    const data = await fs.readFile(tempFile);
     res.end(data);
   } catch (err) {
-    console.error("Render failed:", err);
-    if (!res.headersSent) {
-      res.status(500).type("text").send(err instanceof Error ? err.message : String(err));
-    }
+    res.status(500).type("text").send(err instanceof Error ? err.message : String(err));
+    return;
   } finally {
-    fs.unlink(tempFile).catch(() => {});
+    fs.unlink(job.tempFile).catch(() => {});
+    jobs.delete(job.id);
   }
 });
 
