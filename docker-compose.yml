@@ -1,0 +1,17 @@
+services:
+  conversation-generator:
+    build: .
+    image: conversation-generator:latest
+    container_name: conversation-generator
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3838:3838"
+    # Chromium sandbox needs either extra caps or /dev/shm bumped.
+    # Bumping shm is the simple, safe path.
+    shm_size: "1gb"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3838/status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s

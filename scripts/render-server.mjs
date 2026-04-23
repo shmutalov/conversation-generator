@@ -10,8 +10,10 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, "..");
 const entryPoint = path.resolve(projectRoot, "src/index.ts");
+const webDist = path.resolve(projectRoot, "web-dist");
 
 const PORT = Number(process.env.PORT ?? 3838);
+const HOST = process.env.HOST ?? "0.0.0.0";
 
 console.log("Bundling Remotion composition…");
 const serveUrl = await bundle({ entryPoint });
@@ -23,6 +25,14 @@ app.use(express.json({ limit: "2mb" }));
 app.get("/status", (_req, res) => {
   res.json({ ok: true });
 });
+
+const webDistExists = await fs
+  .stat(webDist)
+  .then((s) => s.isDirectory())
+  .catch(() => false);
+if (webDistExists) {
+  app.use(express.static(webDist, { index: "index.html", extensions: ["html"] }));
+}
 
 function looksLikeDialogue(b) {
   return (
@@ -44,6 +54,8 @@ function broadcast(job, event) {
   }
 }
 
+const browserExecutable = process.env.CHROMIUM_PATH || undefined;
+
 async function runRenderJob(job, props) {
   try {
     broadcast(job, { kind: "state", state: "selecting" });
@@ -51,6 +63,7 @@ async function runRenderJob(job, props) {
       serveUrl,
       id: "Conversation",
       inputProps: props,
+      browserExecutable,
     });
 
     broadcast(job, { kind: "state", state: "rendering" });
@@ -60,6 +73,7 @@ async function runRenderJob(job, props) {
       codec: "h264",
       outputLocation: job.tempFile,
       inputProps: props,
+      browserExecutable,
       onProgress: ({ progress }) => {
         job.progress = progress;
         broadcast(job, { kind: "progress", progress });
@@ -174,6 +188,6 @@ app.get("/render/:jobId/file", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Render server listening on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Render server listening on http://${HOST}:${PORT}`);
 });
