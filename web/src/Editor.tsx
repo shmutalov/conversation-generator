@@ -272,23 +272,8 @@ export const Editor: React.FC<{
       </section>
 
       <section style={{ ...section, borderBottom: "none" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 10,
-          }}
-        >
-          <span style={label}>Messages</span>
-          <div style={{ display: "flex", gap: 6 }}>
-            <button type="button" style={button()} onClick={() => addMsg("me")}>
-              + Me
-            </button>
-            <button type="button" style={button()} onClick={() => addMsg("them")}>
-              + Them
-            </button>
-          </div>
+        <div style={{ marginBottom: 10 }}>
+          <span style={label}>Messages ({value.messages.length})</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {value.messages.map((m, i) => (
@@ -351,6 +336,22 @@ export const Editor: React.FC<{
               />
             </div>
           ))}
+        </div>
+        <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+          <button
+            type="button"
+            style={{ ...button(), flex: 1, padding: "8px 10px" }}
+            onClick={() => addMsg("me")}
+          >
+            + Me
+          </button>
+          <button
+            type="button"
+            style={{ ...button(), flex: 1, padding: "8px 10px" }}
+            onClick={() => addMsg("them")}
+          >
+            + Them
+          </button>
         </div>
       </section>
     </div>

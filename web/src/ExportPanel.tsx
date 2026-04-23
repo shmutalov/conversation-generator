@@ -83,14 +83,19 @@ export const ExportPanel: React.FC<{ dialogue: Dialogue }> = ({ dialogue }) => {
       ) : null}
 
       {render.kind === "done" ? (
-        <div style={{ fontSize: 12, display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ fontSize: 12, display: "flex", flexDirection: "column", gap: 8 }}>
           <span style={{ color: "#64d394" }}>
             Rendered {(render.bytes / 1024).toFixed(0)} KB.
           </span>
           <a
             href={render.url}
             download={`${dialogue.template}.mp4`}
-            style={{ color: "#60a5fa", fontWeight: 600 }}
+            style={{
+              ...btn(true),
+              textAlign: "center",
+              textDecoration: "none",
+              display: "inline-block",
+            }}
           >
             ↓ Download MP4
           </a>
