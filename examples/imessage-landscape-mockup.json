@@ -1,0 +1,22 @@
+{
+  "template": "imessage",
+  "resolution": "720p",
+  "aspect": "landscape-16:9",
+  "fps": 30,
+  "theme": "dark",
+  "contactName": "Sam",
+  "userName": "Me",
+  "typeSpeedCps": 22,
+  "thinkingMs": 1400,
+  "pauseAfterMs": 500,
+  "responderReveal": "instant",
+  "presentation": "phone-mockup",
+  "backdrop": "gradient",
+  "messages": [
+    { "sender": "me", "text": "hey, free this weekend?" },
+    { "sender": "them", "text": "saturday yes, sunday busy" },
+    { "sender": "me", "text": "saturday works. hike?" },
+    { "sender": "them", "text": "i'm in. 9am trailhead?" },
+    { "sender": "me", "text": "perfect, see you there" }
+  ]
+}

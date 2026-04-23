@@ -1,0 +1,19 @@
+{
+  "template": "whatsapp",
+  "resolution": "720p",
+  "aspect": "landscape-16:9",
+  "fps": 30,
+  "theme": "dark",
+  "contactName": "Alex",
+  "userName": "Me",
+  "typeSpeedCps": 22,
+  "thinkingMs": 1400,
+  "pauseAfterMs": 500,
+  "responderReveal": "instant",
+  "messages": [
+    { "sender": "me", "text": "dinner tonight?" },
+    { "sender": "them", "text": "yes! where?" },
+    { "sender": "me", "text": "ramen spot?" },
+    { "sender": "them", "text": "perfect 🍜" }
+  ]
+}

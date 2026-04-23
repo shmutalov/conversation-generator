@@ -1,0 +1,18 @@
+{
+  "template": "chatgpt",
+  "resolution": "480p",
+  "aspect": "portrait-9:16",
+  "fps": 30,
+  "theme": "dark",
+  "contactName": "ChatGPT",
+  "userName": "You",
+  "typeSpeedCps": 34,
+  "thinkingMs": 1200,
+  "pauseAfterMs": 600,
+  "responderReveal": "teletype",
+  "messages": [
+    { "sender": "me", "text": "What's a good 5-day Tokyo itinerary?" },
+    { "sender": "them", "text": "Day 1: Asakusa + Senso-ji\nDay 2: Shibuya + Shinjuku\nDay 3: Tsukiji + Ginza\nDay 4: Kamakura day trip\nDay 5: Harajuku + Meiji Shrine" },
+    { "sender": "me", "text": "Nice, thanks!" }
+  ]
+}

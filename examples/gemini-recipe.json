@@ -1,0 +1,18 @@
+{
+  "template": "gemini",
+  "resolution": "720p",
+  "aspect": "portrait-9:16",
+  "fps": 30,
+  "theme": "dark",
+  "contactName": "Gemini",
+  "userName": "You",
+  "typeSpeedCps": 30,
+  "thinkingMs": 1400,
+  "pauseAfterMs": 600,
+  "responderReveal": "teletype",
+  "messages": [
+    { "sender": "me", "text": "What's a 10-minute pasta recipe?" },
+    { "sender": "them", "text": "Cacio e Pepe:\n• Boil spaghetti, reserve 1 cup pasta water\n• Toast cracked black pepper in a dry pan\n• Off heat, whisk pasta water + pecorino romano\n• Toss with pasta\n\nThat's it." },
+    { "sender": "me", "text": "perfect, thank you" }
+  ]
+}

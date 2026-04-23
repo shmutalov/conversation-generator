@@ -1,0 +1,18 @@
+{
+  "template": "chatgpt",
+  "resolution": "720p",
+  "aspect": "landscape-16:9",
+  "fps": 30,
+  "theme": "dark",
+  "contactName": "ChatGPT",
+  "userName": "You",
+  "typeSpeedCps": 34,
+  "thinkingMs": 1100,
+  "pauseAfterMs": 500,
+  "responderReveal": "teletype",
+  "messages": [
+    { "sender": "me", "text": "Explain React's useMemo in one sentence." },
+    { "sender": "them", "text": "useMemo caches a computed value between renders so an expensive calculation isn't re-run unless its dependencies change." },
+    { "sender": "me", "text": "Perfect." }
+  ]
+}

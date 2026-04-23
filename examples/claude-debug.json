@@ -1,0 +1,18 @@
+{
+  "template": "claude",
+  "resolution": "720p",
+  "aspect": "portrait-9:16",
+  "fps": 30,
+  "theme": "light",
+  "contactName": "Claude",
+  "userName": "You",
+  "typeSpeedCps": 32,
+  "thinkingMs": 1300,
+  "pauseAfterMs": 500,
+  "responderReveal": "teletype",
+  "messages": [
+    { "sender": "me", "text": "Why is my useEffect running twice?" },
+    { "sender": "them", "text": "In React 18 StrictMode, effects run twice in development to help catch bugs. It only happens in dev — production runs them once. Safe to ignore unless you're doing something non-idempotent." },
+    { "sender": "me", "text": "Ah that explains it, thanks!" }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "template": "grok",
+  "resolution": "720p",
+  "aspect": "portrait-9:16",
+  "fps": 30,
+  "theme": "dark",
+  "contactName": "Grok",
+  "userName": "You",
+  "typeSpeedCps": 30,
+  "thinkingMs": 1100,
+  "pauseAfterMs": 500,
+  "responderReveal": "teletype",
+  "messages": [
+    { "sender": "me", "text": "tell me a joke about JavaScript" },
+    { "sender": "them", "text": "Why did the JavaScript dev get kicked out of the bar?\n\nHe kept trying to use '==' instead of '==='." },
+    { "sender": "me", "text": "lol" }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "template": "telegram",
+  "resolution": "720p",
+  "aspect": "portrait-9:16",
+  "fps": 30,
+  "theme": "dark",
+  "contactName": "Dana",
+  "userName": "Me",
+  "typeSpeedCps": 22,
+  "thinkingMs": 1500,
+  "pauseAfterMs": 450,
+  "responderReveal": "instant",
+  "messages": [
+    { "sender": "me", "text": "coffee at 3?" },
+    { "sender": "them", "text": "sure, where?" },
+    { "sender": "me", "text": "the usual spot" },
+    { "sender": "them", "text": "see you there" },
+    { "sender": "me", "text": "👍" }
+  ]
+}

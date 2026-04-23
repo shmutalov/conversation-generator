@@ -1,0 +1,8 @@
+node_modules/
+build/
+out/
+web-dist/
+.remotion/
+*.log
+*.tsbuildinfo
+.DS_Store

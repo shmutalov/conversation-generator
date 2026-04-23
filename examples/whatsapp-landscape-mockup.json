@@ -1,0 +1,22 @@
+{
+  "template": "whatsapp",
+  "resolution": "720p",
+  "aspect": "landscape-16:9",
+  "fps": 30,
+  "theme": "dark",
+  "contactName": "Alex",
+  "userName": "Me",
+  "typeSpeedCps": 22,
+  "thinkingMs": 1500,
+  "pauseAfterMs": 500,
+  "responderReveal": "instant",
+  "presentation": "phone-mockup",
+  "backdrop": "gradient",
+  "messages": [
+    { "sender": "me", "text": "dinner at 8?" },
+    { "sender": "them", "text": "yes!!" },
+    { "sender": "me", "text": "that new ramen place?" },
+    { "sender": "them", "text": "perfect 🍜" },
+    { "sender": "me", "text": "see you there" }
+  ]
+}
