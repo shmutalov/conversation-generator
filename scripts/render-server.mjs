@@ -46,7 +46,7 @@ function looksLikeDialogue(b) {
 }
 
 const jobs = new Map();
-const JOB_TTL_MS = Number(process.env.JOB_TTL_MS ?? 60_000);
+const JOB_TTL_MS = Number(process.env.JOB_TTL_MS ?? 60 * 60 * 1000);
 
 function broadcast(job, event) {
   job.lastEvent = event;
