@@ -24,21 +24,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         fontconfig \
         ca-certificates \
         dumb-init \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --home /app --shell /usr/sbin/nologin app
 
 WORKDIR /app
+USER app
 
-COPY package.json package-lock.json ./
+COPY --chown=app:app package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-COPY tsconfig.json remotion.config.ts ./
-COPY src ./src
-COPY scripts ./scripts
-COPY --from=web-build /app/web-dist ./web-dist
-
-RUN useradd --system --home /app --shell /usr/sbin/nologin app \
-    && chown -R app:app /app
-USER app
+COPY --chown=app:app tsconfig.json remotion.config.ts ./
+COPY --chown=app:app src ./src
+COPY --chown=app:app scripts ./scripts
+COPY --chown=app:app --from=web-build /app/web-dist ./web-dist
 
 EXPOSE 3838
 
