@@ -116,19 +116,7 @@ export const ExportPanel: React.FC<{ dialogue: Dialogue }> = ({ dialogue }) => {
       } else if (event.kind === "done") {
         es.close();
         esRef.current = null;
-        setRender({ kind: "rendering", stage: "downloading", progress: 1 });
-        try {
-          const r = await fetch(event.url);
-          if (!r.ok) throw new Error(`Download HTTP ${r.status}`);
-          const blob = await r.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          setRender({ kind: "done", url: blobUrl, bytes: blob.size });
-        } catch (err) {
-          setRender({
-            kind: "error",
-            message: err instanceof Error ? err.message : String(err),
-          });
-        }
+        setRender({ kind: "done", url: event.url, bytes: event.bytes });
       } else if (event.kind === "error") {
         es.close();
         esRef.current = null;

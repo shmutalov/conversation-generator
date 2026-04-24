@@ -46,12 +46,21 @@ function looksLikeDialogue(b) {
 }
 
 const jobs = new Map();
+const JOB_TTL_MS = Number(process.env.JOB_TTL_MS ?? 60_000);
 
 function broadcast(job, event) {
   job.lastEvent = event;
   for (const subscriber of job.subscribers) {
     subscriber(event);
   }
+}
+
+function scheduleCleanup(job) {
+  if (job.cleanupTimer) return;
+  job.cleanupTimer = setTimeout(() => {
+    fs.unlink(job.tempFile).catch(() => {});
+    jobs.delete(job.id);
+  }, JOB_TTL_MS);
 }
 
 const browserExecutable = process.env.CHROMIUM_PATH || undefined;
@@ -88,11 +97,13 @@ async function runRenderJob(job, props) {
       url: `/render/${job.id}/file`,
       bytes: stat.size,
     });
+    scheduleCleanup(job);
   } catch (err) {
     job.state = "error";
     job.error = err instanceof Error ? err.message : String(err);
     broadcast(job, { kind: "error", message: job.error });
     console.error(`Render ${job.id} failed:`, err);
+    scheduleCleanup(job);
   }
 }
 
@@ -181,10 +192,6 @@ app.get("/render/:jobId/file", async (req, res) => {
     res.end(data);
   } catch (err) {
     res.status(500).type("text").send(err instanceof Error ? err.message : String(err));
-    return;
-  } finally {
-    fs.unlink(job.tempFile).catch(() => {});
-    jobs.delete(job.id);
   }
 });
 
