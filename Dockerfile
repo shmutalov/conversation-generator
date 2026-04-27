@@ -20,10 +20,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         chromium \
         ffmpeg \
         fonts-liberation \
+        fonts-noto-core \
         fonts-noto-color-emoji \
+        fonts-symbola \
         fontconfig \
         ca-certificates \
         dumb-init \
+    && fc-cache -f \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --home /app --shell /usr/sbin/nologin app
 
